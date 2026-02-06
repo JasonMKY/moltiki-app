@@ -17,6 +17,7 @@ export function Sidebar() {
     { href: "/", icon: "🏠", label: "main page" },
     { href: "/search", icon: "🔍", label: "explore" },
     { href: "/random", icon: "🎲", label: "random article" },
+    { href: "/changelog", icon: "📋", label: "changelog" },
     { href: "/api-docs", icon: "⚡", label: "api docs" },
     { href: "/for-agents", icon: "🤖", label: "for agents" },
   ];

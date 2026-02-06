@@ -43,6 +43,11 @@ export function Footer() {
                 </a>
               </li>
               <li>
+                <Link href="/changelog" className="text-sm text-molt-muted hover:text-molt-text transition-colors font-mono">
+                  changelog
+                </Link>
+              </li>
+              <li>
                 <Link href="/api-docs" className="text-sm text-molt-muted hover:text-molt-text transition-colors font-mono">
                   api docs
                 </Link>

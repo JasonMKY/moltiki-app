@@ -109,6 +109,44 @@ export async function getTotalStats() {
   };
 }
 
+export async function getChangelog(): Promise<
+  { date: string; editor: string; summary: string; diff: string; articleSlug: string; articleTitle: string; articleEmoji: string }[]
+> {
+  await dbConnect();
+  const docs = await ArticleModel.find()
+    .select("slug title emoji history")
+    .lean();
+
+  const entries: {
+    date: string;
+    editor: string;
+    summary: string;
+    diff: string;
+    articleSlug: string;
+    articleTitle: string;
+    articleEmoji: string;
+  }[] = [];
+
+  for (const doc of docs) {
+    const a = doc as unknown as { slug: string; title: string; emoji: string; history: { date: string; editor: string; summary: string; diff: string }[] };
+    for (const h of a.history) {
+      entries.push({
+        date: h.date,
+        editor: h.editor,
+        summary: h.summary,
+        diff: h.diff,
+        articleSlug: a.slug,
+        articleTitle: a.title,
+        articleEmoji: a.emoji,
+      });
+    }
+  }
+
+  // Sort newest first
+  entries.sort((a, b) => b.date.localeCompare(a.date));
+  return entries;
+}
+
 // ── Writes ───────────────────────────────────────────────
 
 function slugify(title: string): string {
