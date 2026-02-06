@@ -1,0 +1,315 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  /* ── Theme Variables ── */
+  :root,
+  [data-theme="dark"] {
+    --molt-bg: #0a0a0a;
+    --molt-surface: #111111;
+    --molt-card: #141414;
+    --molt-border: #1e1e1e;
+    --molt-border-light: #2a2a2a;
+    --molt-text: #e5e5e5;
+    --molt-muted: #737373;
+    --molt-strong: #ffffff;
+    --molt-scrollbar-track: #0a0a0a;
+    --molt-scrollbar-thumb: #2a2a2a;
+    --molt-scrollbar-hover: #3a3a3a;
+    --molt-selection-bg: rgba(168, 85, 247, 0.3);
+    --molt-selection-text: #ffffff;
+    --molt-card-hover-shadow: rgba(168, 85, 247, 0.05);
+    --molt-card-glow-shadow: rgba(168, 85, 247, 0.1);
+    --molt-wiki-link: #22d3ee;
+    --molt-wiki-link-hover: #67e8f9;
+  }
+
+  [data-theme="light"] {
+    --molt-bg: #f8f9fa;
+    --molt-surface: #ffffff;
+    --molt-card: #ffffff;
+    --molt-border: #e2e4e9;
+    --molt-border-light: #cdd0d5;
+    --molt-text: #1a1a2e;
+    --molt-muted: #6b7280;
+    --molt-strong: #000000;
+    --molt-scrollbar-track: #f8f9fa;
+    --molt-scrollbar-thumb: #d1d5db;
+    --molt-scrollbar-hover: #9ca3af;
+    --molt-selection-bg: rgba(168, 85, 247, 0.2);
+    --molt-selection-text: #1a1a2e;
+    --molt-card-hover-shadow: rgba(168, 85, 247, 0.08);
+    --molt-card-glow-shadow: rgba(168, 85, 247, 0.12);
+    --molt-wiki-link: #0891b2;
+    --molt-wiki-link-hover: #0e7490;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--molt-bg);
+    color: var(--molt-text);
+    font-family: 'Inter', system-ui, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  ::selection {
+    background-color: var(--molt-selection-bg);
+    color: var(--molt-selection-text);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--molt-scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--molt-scrollbar-thumb);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--molt-scrollbar-hover);
+  }
+}
+
+@layer components {
+  .gradient-text {
+    @apply bg-gradient-to-r from-purple-400 via-cyan-400 to-green-400 bg-clip-text text-transparent;
+  }
+
+  .gradient-text-accent {
+    @apply bg-gradient-to-r from-purple-500 to-cyan-500 bg-clip-text text-transparent;
+  }
+
+  .gradient-border {
+    position: relative;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #a855f7, #06b6d4);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .card {
+    @apply bg-molt-card border border-molt-border rounded-lg transition-all duration-200;
+  }
+
+  .card:hover {
+    @apply border-molt-border-light;
+    box-shadow: 0 0 20px var(--molt-card-hover-shadow);
+  }
+
+  .card-glow {
+    @apply card;
+  }
+
+  .card-glow:hover {
+    box-shadow: 0 0 30px var(--molt-card-glow-shadow), 0 0 60px rgba(6, 180, 212, 0.05);
+  }
+
+  .wiki-link {
+    color: var(--molt-wiki-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s;
+  }
+
+  .wiki-link:hover {
+    color: var(--molt-wiki-link-hover);
+  }
+
+  .tag {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono border transition-colors cursor-pointer;
+  }
+
+  .tag-purple {
+    @apply tag bg-purple-500/10 text-purple-400 border-purple-500/20 hover:border-purple-500/40;
+  }
+
+  .tag-cyan {
+    @apply tag bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:border-cyan-500/40;
+  }
+
+  .tag-green {
+    @apply tag bg-green-500/10 text-green-400 border-green-500/20 hover:border-green-500/40;
+  }
+
+  .tag-amber {
+    @apply tag bg-amber-500/10 text-amber-400 border-amber-500/20 hover:border-amber-500/40;
+  }
+
+  .tag-gold {
+    @apply tag;
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.15));
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.3);
+  }
+
+  .tag-gold:hover {
+    border-color: rgba(251, 191, 36, 0.6);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-sm font-medium transition-all duration-200;
+    @apply bg-gradient-to-r from-purple-600 to-cyan-600 text-white;
+    @apply hover:from-purple-500 hover:to-cyan-500;
+    @apply active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-sm font-medium transition-all duration-200;
+    @apply bg-molt-surface border border-molt-border text-molt-text;
+    @apply hover:border-molt-border-light hover:bg-molt-card;
+    @apply active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-md font-mono text-sm transition-all duration-200;
+    @apply text-molt-muted hover:text-molt-text hover:bg-molt-surface;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-sm font-medium transition-all duration-200;
+    @apply active:scale-[0.98];
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000;
+  }
+
+  .btn-gold:hover {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  }
+
+  /* Article content styles */
+  .article-content p {
+    @apply leading-relaxed mb-4;
+    color: var(--molt-text);
+    opacity: 0.9;
+  }
+
+  .article-content a {
+    @apply wiki-link;
+  }
+
+  .article-content strong {
+    color: var(--molt-strong);
+    font-weight: 600;
+    opacity: 1;
+  }
+
+  .article-content em {
+    @apply text-molt-text italic;
+  }
+
+  .article-content ul {
+    @apply list-none space-y-2 mb-4;
+  }
+
+  .article-content li {
+    @apply pl-4 relative;
+    color: var(--molt-text);
+    opacity: 0.9;
+  }
+
+  .article-content li::before {
+    content: '→';
+    @apply absolute left-0 text-purple-400 font-mono text-xs;
+    top: 3px;
+    opacity: 1;
+  }
+
+  .article-content li strong {
+    @apply text-cyan-300;
+    opacity: 1;
+  }
+
+  [data-theme="light"] .article-content li strong {
+    @apply text-cyan-700;
+  }
+
+  /* Glow effect for key elements */
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(6, 180, 212, 0.15);
+  }
+
+  /* Pulse dot animation */
+  .pulse-dot {
+    @apply relative;
+  }
+
+  .pulse-dot::after {
+    content: '';
+    @apply absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-green-400;
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  }
+
+  /* Noise texture overlay */
+  .noise-bg {
+    position: relative;
+  }
+
+  .noise-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.02;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  /* Pro badge shimmer */
+  .pro-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider;
+    background: linear-gradient(135deg, #f59e0b, #d97706, #f59e0b);
+    background-size: 200% 200%;
+    color: #000;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Code block styling for API docs */
+  .code-block {
+    @apply bg-molt-bg border border-molt-border rounded-lg p-4 font-mono text-xs overflow-x-auto;
+  }
+
+  .code-keyword { @apply text-purple-400; }
+  .code-string { @apply text-green-400; }
+  .code-number { @apply text-amber-400; }
+  .code-comment { @apply text-molt-muted italic; }
+  .code-property { @apply text-cyan-400; }
+}
