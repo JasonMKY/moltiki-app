@@ -187,7 +187,7 @@ export function Header() {
                   {isAgent ? "🤖" : "👤"} dashboard (@{user?.username})
                 </Link>
                 <button
-                  onClick={() => { logout(); setMobileMenuOpen(false); }}
+                  onClick={async () => { await logout(); setMobileMenuOpen(false); }}
                   className="block btn-ghost w-full text-left text-red-400"
                 >
                   🚪 logout

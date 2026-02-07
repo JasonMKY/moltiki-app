@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { usePro } from "@/components/ProProvider";
+import { useAuth } from "@/components/AuthProvider";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const freeFeatures = [
   { text: "Read all articles", included: true },
@@ -38,11 +41,11 @@ const proFeatures = [
 const faqs = [
   {
     q: "Can I switch between plans?",
-    a: "Yes, you can upgrade to Pro or downgrade to Free at any time. Pro features activate instantly upon upgrade.",
+    a: "Yes, you can upgrade to Pro at any time. Pro features activate instantly after payment.",
   },
   {
     q: "What payment methods do you accept?",
-    a: "We accept all major credit cards via Stripe. We also support cryptocurrency payments for the Pro tier.",
+    a: "We accept all major credit cards via Stripe.",
   },
   {
     q: "Is there a refund policy?",
@@ -50,7 +53,7 @@ const faqs = [
   },
   {
     q: "What happens to my data if I downgrade?",
-    a: "Your bookmarks and reading lists are preserved locally. You can export them before downgrading. API keys will be rate-limited to free tier levels.",
+    a: "Your bookmarks and reading lists are preserved locally. API keys will be rate-limited to free tier levels.",
   },
   {
     q: "Do you offer team/enterprise pricing?",
@@ -59,14 +62,41 @@ const faqs = [
 ];
 
 export default function PricingPage() {
-  const { plan, setPlan, isPro } = usePro();
+  const { isPro } = usePro();
+  const { isLoggedIn, getIdToken } = useAuth();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  function handleUpgrade() {
-    setPlan("pro");
-  }
+  async function handleUpgrade() {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
 
-  function handleDowngrade() {
-    setPlan("free");
+    setLoading(true);
+    try {
+      const token = await getIdToken();
+      if (!token) {
+        alert("Please log in to upgrade.");
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Failed to start checkout. Please try again.");
+        setLoading(false);
+      }
+    } catch {
+      alert("Failed to start checkout. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -129,13 +159,13 @@ export default function PricingPage() {
             ))}
           </ul>
 
-          {isPro ? (
-            <button onClick={handleDowngrade} className="btn-secondary w-full justify-center">
-              switch to free
-            </button>
+          {!isPro ? (
+            <div className="btn-secondary w-full justify-center opacity-50 cursor-default">
+              current plan
+            </div>
           ) : (
             <div className="btn-secondary w-full justify-center opacity-50 cursor-default">
-              ✓ current plan
+              free tier
             </div>
           )}
         </div>
@@ -177,11 +207,22 @@ export default function PricingPage() {
 
           {isPro ? (
             <div className="btn-gold w-full justify-center opacity-80 cursor-default">
-              ✓ current plan
+              current plan
             </div>
           ) : (
-            <button onClick={handleUpgrade} className="btn-gold w-full justify-center">
-              upgrade to pro →
+            <button
+              onClick={handleUpgrade}
+              disabled={loading}
+              className="btn-gold w-full justify-center disabled:opacity-50"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  redirecting to checkout...
+                </span>
+              ) : (
+                "upgrade to pro →"
+              )}
             </button>
           )}
         </div>
@@ -194,7 +235,7 @@ export default function PricingPage() {
           <div className="relative flex flex-col md:flex-row items-center gap-6">
             <div className="flex-1">
               <h3 className="font-mono font-bold text-lg text-molt-text mb-2">
-                ⚡ need more API power?
+                need more API power?
               </h3>
               <p className="text-sm text-molt-muted">
                 Pro includes 5,000 API requests/day, the stats endpoint, and bulk
@@ -212,7 +253,7 @@ export default function PricingPage() {
       <section className="max-w-3xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <h2 className="font-mono font-bold text-lg text-molt-text">
-            📊 feature comparison
+            feature comparison
           </h2>
           <div className="flex-1 h-px bg-molt-border" />
         </div>
@@ -243,7 +284,7 @@ export default function PricingPage() {
                 { feature: "Bulk export", free: "—", pro: "JSON / CSV" },
                 { feature: "Bookmarks", free: "—", pro: "Unlimited" },
                 { feature: "Reading lists", free: "—", pro: "Unlimited" },
-                { feature: "Contributor badge", free: "Standard", pro: "Gold ✨" },
+                { feature: "Contributor badge", free: "Standard", pro: "Gold" },
                 { feature: "Ad-free experience", free: "—", pro: "✓" },
                 { feature: "Support", free: "Community", pro: "Priority" },
               ].map((row) => (
@@ -268,7 +309,7 @@ export default function PricingPage() {
       <section className="max-w-3xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <h2 className="font-mono font-bold text-lg text-molt-text">
-            ❓ frequently asked questions
+            frequently asked questions
           </h2>
           <div className="flex-1 h-px bg-molt-border" />
         </div>
@@ -306,11 +347,22 @@ export default function PricingPage() {
         <div className="flex items-center justify-center gap-3">
           {isPro ? (
             <span className="btn-gold cursor-default">
-              👑 you&apos;re already pro
+              you&apos;re already pro
             </span>
           ) : (
-            <button onClick={handleUpgrade} className="btn-gold">
-              upgrade to pro — $9/mo →
+            <button
+              onClick={handleUpgrade}
+              disabled={loading}
+              className="btn-gold disabled:opacity-50"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  redirecting...
+                </span>
+              ) : (
+                "upgrade to pro — $9/mo →"
+              )}
             </button>
           )}
         </div>

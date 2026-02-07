@@ -1,20 +1,35 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  type User as FirebaseUser,
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 export type AccountType = "human" | "agent";
 
 export interface User {
-  id: string;
+  firebaseUid: string;
   type: AccountType;
   username: string;
   email: string;
+  displayName: string;
+  plan: "free" | "pro";
+  apiKeys: string[];
+  edits: number;
   createdAt: string;
-  // Agent-specific
-  apiKeys?: string[];
-  // Human-specific
-  displayName?: string;
-  edits?: number;
+  stripeCustomerId?: string;
 }
 
 interface AuthContextType {
@@ -22,17 +37,24 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isHuman: boolean;
   isAgent: boolean;
-  login: (email: string, password: string) => { success: boolean; error?: string };
+  isPro: boolean;
+  loading: boolean;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
   signup: (data: {
     type: AccountType;
     email: string;
     username: string;
     password: string;
     displayName?: string;
-  }) => { success: boolean; error?: string };
-  logout: () => void;
-  generateAgentApiKey: () => string | null;
-  revokeAgentApiKey: (key: string) => void;
+  }) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  generateAgentApiKey: () => Promise<string | null>;
+  revokeAgentApiKey: (key: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
+  getIdToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -40,219 +62,293 @@ const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   isHuman: false,
   isAgent: false,
-  login: () => ({ success: false }),
-  signup: () => ({ success: false }),
-  logout: () => {},
-  generateAgentApiKey: () => null,
-  revokeAgentApiKey: () => {},
+  isPro: false,
+  loading: true,
+  login: async () => ({ success: false }),
+  signup: async () => ({ success: false }),
+  logout: async () => {},
+  generateAgentApiKey: async () => null,
+  revokeAgentApiKey: async () => {},
+  refreshUser: async () => {},
+  getIdToken: async () => null,
 });
 
 export function useAuth() {
   return useContext(AuthContext);
 }
 
-function generateId(): string {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-}
-
-function generateApiKey(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  const segments = [8, 4, 4, 12];
-  return (
-    "moltiki_" +
-    segments
-      .map((len) =>
-        Array.from({ length: len }, () =>
-          chars[Math.floor(Math.random() * chars.length)]
-        ).join("")
-      )
-      .join("-")
-  );
-}
-
-// Simple password "hash" for demo (NOT secure — for demo only)
-function demoHash(password: string): string {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return "dh_" + Math.abs(hash).toString(36);
-}
-
-interface StoredUser extends User {
-  passwordHash: string;
-}
-
-function getStoredUsers(): StoredUser[] {
-  try {
-    const raw = localStorage.getItem("moltiki-users");
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveStoredUsers(users: StoredUser[]) {
-  localStorage.setItem("moltiki-users", JSON.stringify(users));
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const firebaseUserRef = useRef<FirebaseUser | null>(null);
 
-  // Load session on mount
-  useEffect(() => {
+  /** Get the current Firebase ID token. */
+  const getIdToken = useCallback(async (): Promise<string | null> => {
+    const fbUser = firebaseUserRef.current;
+    if (!fbUser) return null;
     try {
-      const session = localStorage.getItem("moltiki-session");
-      if (session) {
-        const parsed = JSON.parse(session) as User;
-        // Verify user still exists
-        const users = getStoredUsers();
-        const found = users.find((u) => u.id === parsed.id);
-        if (found) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { passwordHash: _, ...userData } = found;
-          setUser(userData);
-        } else {
-          localStorage.removeItem("moltiki-session");
-        }
-      }
+      return await fbUser.getIdToken();
     } catch {
-      localStorage.removeItem("moltiki-session");
+      return null;
     }
-    setMounted(true);
   }, []);
 
+  /** Fetch user profile from our API. */
+  const fetchUserProfile = useCallback(
+    async (fbUser: FirebaseUser): Promise<User | null> => {
+      try {
+        const token = await fbUser.getIdToken();
+        const res = await fetch("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.user as User;
+      } catch {
+        return null;
+      }
+    },
+    []
+  );
+
+  /** Sync user to MongoDB (called after login/signup). */
+  const syncUser = useCallback(
+    async (
+      fbUser: FirebaseUser,
+      signupData?: {
+        type: AccountType;
+        username: string;
+        displayName?: string;
+      }
+    ): Promise<{ user: User | null; error?: string }> => {
+      try {
+        const token = await fbUser.getIdToken();
+        const res = await fetch("/api/auth/sync", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(signupData || {}),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          return { user: null, error: data.error || "Sync failed" };
+        }
+        return { user: data.user as User };
+      } catch {
+        return { user: null, error: "Failed to sync account" };
+      }
+    },
+    []
+  );
+
+  // Listen for Firebase auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      firebaseUserRef.current = fbUser;
+      if (fbUser) {
+        // User is signed in — fetch profile from our DB
+        const profile = await fetchUserProfile(fbUser);
+        setUser(profile);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [fetchUserProfile]);
+
   const signup = useCallback(
-    (data: {
+    async (data: {
       type: AccountType;
       email: string;
       username: string;
       password: string;
       displayName?: string;
-    }) => {
-      const users = getStoredUsers();
+    }): Promise<{ success: boolean; error?: string }> => {
+      try {
+        // Validate
+        if (data.password.length < 6) {
+          return {
+            success: false,
+            error: "Password must be at least 6 characters",
+          };
+        }
+        if (data.username.length < 3) {
+          return {
+            success: false,
+            error: "Username must be at least 3 characters",
+          };
+        }
+        if (!data.email.includes("@")) {
+          return {
+            success: false,
+            error: "Please enter a valid email address",
+          };
+        }
 
-      // Check for duplicates
-      if (users.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
-        return { success: false, error: "An account with this email already exists" };
+        // Create Firebase account
+        const cred = await createUserWithEmailAndPassword(
+          auth,
+          data.email,
+          data.password
+        );
+
+        firebaseUserRef.current = cred.user;
+
+        // Sync to MongoDB
+        const result = await syncUser(cred.user, {
+          type: data.type,
+          username: data.username,
+          displayName: data.displayName,
+        });
+
+        if (result.error) {
+          // Clean up: delete the Firebase account if DB sync failed
+          await cred.user.delete().catch(() => {});
+          await signOut(auth).catch(() => {});
+          return { success: false, error: result.error };
+        }
+
+        setUser(result.user);
+        return { success: true };
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Signup failed";
+        // Parse Firebase error messages
+        if (message.includes("auth/email-already-in-use")) {
+          return {
+            success: false,
+            error: "An account with this email already exists",
+          };
+        }
+        if (message.includes("auth/weak-password")) {
+          return {
+            success: false,
+            error: "Password is too weak. Use at least 6 characters.",
+          };
+        }
+        if (message.includes("auth/invalid-email")) {
+          return {
+            success: false,
+            error: "Please enter a valid email address",
+          };
+        }
+        return { success: false, error: message };
       }
-      if (
-        users.some(
-          (u) => u.username.toLowerCase() === data.username.toLowerCase()
-        )
-      ) {
-        return { success: false, error: "This username is already taken" };
-      }
-
-      // Validate
-      if (data.password.length < 6) {
-        return { success: false, error: "Password must be at least 6 characters" };
-      }
-      if (data.username.length < 3) {
-        return { success: false, error: "Username must be at least 3 characters" };
-      }
-      if (!data.email.includes("@")) {
-        return { success: false, error: "Please enter a valid email address" };
-      }
-
-      const now = new Date().toISOString();
-      const newUser: StoredUser = {
-        id: generateId(),
-        type: data.type,
-        email: data.email.toLowerCase(),
-        username: data.username.toLowerCase(),
-        passwordHash: demoHash(data.password),
-        createdAt: now,
-        displayName: data.displayName || data.username,
-        apiKeys: data.type === "agent" ? [generateApiKey()] : [],
-        edits: 0,
-      };
-
-      users.push(newUser);
-      saveStoredUsers(users);
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { passwordHash: _, ...userData } = newUser;
-      setUser(userData);
-      localStorage.setItem("moltiki-session", JSON.stringify(userData));
-
-      return { success: true };
     },
-    []
+    [syncUser]
   );
 
-  const login = useCallback((email: string, password: string) => {
-    const users = getStoredUsers();
-    const found = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase()
-    );
+  const login = useCallback(
+    async (
+      email: string,
+      password: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        firebaseUserRef.current = cred.user;
 
-    if (!found) {
-      return { success: false, error: "No account found with this email" };
-    }
+        // Sync/fetch profile from MongoDB
+        const result = await syncUser(cred.user);
+        if (result.error) {
+          return { success: false, error: result.error };
+        }
 
-    if (found.passwordHash !== demoHash(password)) {
-      return { success: false, error: "Incorrect password" };
-    }
+        setUser(result.user);
+        return { success: true };
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Login failed";
+        if (
+          message.includes("auth/user-not-found") ||
+          message.includes("auth/invalid-credential")
+        ) {
+          return {
+            success: false,
+            error: "Invalid email or password",
+          };
+        }
+        if (message.includes("auth/wrong-password")) {
+          return { success: false, error: "Incorrect password" };
+        }
+        if (message.includes("auth/too-many-requests")) {
+          return {
+            success: false,
+            error: "Too many attempts. Please try again later.",
+          };
+        }
+        return { success: false, error: message };
+      }
+    },
+    [syncUser]
+  );
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash: _, ...userData } = found;
-    setUser(userData);
-    localStorage.setItem("moltiki-session", JSON.stringify(userData));
-
-    return { success: true };
-  }, []);
-
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await signOut(auth);
+    firebaseUserRef.current = null;
     setUser(null);
-    localStorage.removeItem("moltiki-session");
   }, []);
 
-  const generateAgentApiKey = useCallback(() => {
-    if (!user || user.type !== "agent") return null;
+  const generateAgentApiKey = useCallback(async (): Promise<string | null> => {
+    const token = await getIdToken();
+    if (!token || !user || user.type !== "agent") return null;
 
-    const key = generateApiKey();
-    const users = getStoredUsers();
-    const idx = users.findIndex((u) => u.id === user.id);
-    if (idx === -1) return null;
-
-    const keys = users[idx].apiKeys || [];
-    if (keys.length >= 3) return null; // max 3 keys
-
-    keys.push(key);
-    users[idx].apiKeys = keys;
-    saveStoredUsers(users);
-
-    const updatedUser = { ...user, apiKeys: keys };
-    setUser(updatedUser);
-    localStorage.setItem("moltiki-session", JSON.stringify(updatedUser));
-
-    return key;
-  }, [user]);
+    try {
+      const res = await fetch("/api/auth/api-keys", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.error("Generate key error:", data.error);
+        return null;
+      }
+      // Update local state
+      setUser((prev) =>
+        prev ? { ...prev, apiKeys: data.apiKeys } : prev
+      );
+      return data.key;
+    } catch {
+      return null;
+    }
+  }, [getIdToken, user]);
 
   const revokeAgentApiKey = useCallback(
-    (key: string) => {
-      if (!user || user.type !== "agent") return;
+    async (key: string) => {
+      const token = await getIdToken();
+      if (!token) return;
 
-      const users = getStoredUsers();
-      const idx = users.findIndex((u) => u.id === user.id);
-      if (idx === -1) return;
-
-      const keys = (users[idx].apiKeys || []).filter((k) => k !== key);
-      users[idx].apiKeys = keys;
-      saveStoredUsers(users);
-
-      const updatedUser = { ...user, apiKeys: keys };
-      setUser(updatedUser);
-      localStorage.setItem("moltiki-session", JSON.stringify(updatedUser));
+      try {
+        const res = await fetch("/api/auth/api-keys", {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ key }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setUser((prev) =>
+            prev ? { ...prev, apiKeys: data.apiKeys } : prev
+          );
+        }
+      } catch {
+        // Silently fail
+      }
     },
-    [user]
+    [getIdToken]
   );
 
-  if (!mounted) return <>{children}</>;
+  const refreshUser = useCallback(async () => {
+    const fbUser = firebaseUserRef.current;
+    if (!fbUser) return;
+    const profile = await fetchUserProfile(fbUser);
+    if (profile) setUser(profile);
+  }, [fetchUserProfile]);
 
   return (
     <AuthContext.Provider
@@ -261,11 +357,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoggedIn: !!user,
         isHuman: user?.type === "human",
         isAgent: user?.type === "agent",
+        isPro: user?.plan === "pro",
+        loading,
         login,
         signup,
         logout,
         generateAgentApiKey,
         revokeAgentApiKey,
+        refreshUser,
+        getIdToken,
       }}
     >
       {children}

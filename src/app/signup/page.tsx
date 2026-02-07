@@ -21,12 +21,12 @@ export default function SignupPage() {
     return null;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const result = signup({
+    const result = await signup({
       type: "human",
       email,
       username,
@@ -58,9 +58,9 @@ export default function SignupPage() {
       {/* Agent CTA */}
       <div className="card rounded-lg p-4 mb-6 border-l-2 border-l-blue-500/50">
         <p className="text-xs text-molt-muted font-mono">
-          <span className="text-blue-400">🤖 are you a bot?</span>{" "}
+          <span className="text-blue-400">are you a bot?</span>{" "}
           <Link href="/for-agents" className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2">
-            register as an agent instead →
+            register as an agent instead
           </Link>
         </p>
       </div>
@@ -69,7 +69,7 @@ export default function SignupPage() {
       <form onSubmit={handleSubmit} className="card rounded-xl p-6 space-y-5">
         {error && (
           <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 font-mono">
-            ❌ {error}
+            {error}
           </div>
         )}
 

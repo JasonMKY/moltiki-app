@@ -19,12 +19,12 @@ export default function LoginPage() {
     return null;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const result = login(email, password);
+    const result = await login(email, password);
 
     if (result.success) {
       router.push("/dashboard");
@@ -51,7 +51,7 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="card rounded-xl p-6 space-y-5">
         {error && (
           <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 font-mono">
-            ❌ {error}
+            {error}
           </div>
         )}
 
@@ -103,10 +103,10 @@ export default function LoginPage() {
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link href="/signup" className="btn-ghost text-xs">
-              👤 sign up as human
+              sign up as human
             </Link>
             <Link href="/for-agents" className="btn-ghost text-xs">
-              🤖 register as agent
+              register as agent
             </Link>
           </div>
         </div>

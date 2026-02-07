@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useAuth } from "./AuthProvider";
 
 type Plan = "free" | "pro";
 
@@ -20,26 +21,23 @@ interface ReadingListItem {
 
 interface ProContextType {
   plan: Plan;
-  setPlan: (plan: Plan) => void;
   isPro: boolean;
-  // Bookmarks (Pro feature)
+  // Bookmarks (Pro feature - stored locally)
   bookmarks: Bookmark[];
   addBookmark: (slug: string, title: string, emoji: string) => void;
   removeBookmark: (slug: string) => void;
   isBookmarked: (slug: string) => boolean;
-  // Reading list (Pro feature)
+  // Reading list (Pro feature - stored locally)
   readingList: ReadingListItem[];
   addToReadingList: (slug: string, title: string, emoji: string) => void;
   removeFromReadingList: (slug: string) => void;
   isInReadingList: (slug: string) => boolean;
-  // API key (Pro feature)
+  // API key (from auth user)
   apiKey: string | null;
-  generateApiKey: () => void;
 }
 
 const ProContext = createContext<ProContextType>({
   plan: "free",
-  setPlan: () => {},
   isPro: false,
   bookmarks: [],
   addBookmark: () => {},
@@ -50,63 +48,60 @@ const ProContext = createContext<ProContextType>({
   removeFromReadingList: () => {},
   isInReadingList: () => false,
   apiKey: null,
-  generateApiKey: () => {},
 });
 
 export function usePro() {
   return useContext(ProContext);
 }
 
-function generateRandomKey(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  const segments = [8, 4, 4, 12];
-  return "moltiki_" + segments
-    .map((len) =>
-      Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
-    )
-    .join("-");
-}
-
 export function ProProvider({ children }: { children: React.ReactNode }) {
-  const [plan, setPlanState] = useState<Plan>("free");
+  const { user, isPro: authIsPro } = useAuth();
+
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [readingList, setReadingList] = useState<ReadingListItem[]>([]);
-  const [apiKey, setApiKey] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    const storedPlan = localStorage.getItem("molt-plan") as Plan | null;
-    if (storedPlan === "pro" || storedPlan === "free") setPlanState(storedPlan);
+  // Plan comes from the server-side user profile
+  const plan: Plan = user?.plan === "pro" ? "pro" : "free";
+  const isPro = authIsPro;
 
+  // Load bookmarks and reading list from localStorage
+  useEffect(() => {
     const storedBookmarks = localStorage.getItem("molt-bookmarks");
     if (storedBookmarks) {
-      try { setBookmarks(JSON.parse(storedBookmarks)); } catch {}
+      try {
+        setBookmarks(JSON.parse(storedBookmarks));
+      } catch {
+        /* ignore */
+      }
     }
 
     const storedReadingList = localStorage.getItem("molt-reading-list");
     if (storedReadingList) {
-      try { setReadingList(JSON.parse(storedReadingList)); } catch {}
+      try {
+        setReadingList(JSON.parse(storedReadingList));
+      } catch {
+        /* ignore */
+      }
     }
-
-    const storedKey = localStorage.getItem("molt-api-key");
-    if (storedKey) setApiKey(storedKey);
 
     setMounted(true);
   }, []);
 
-  function setPlan(p: Plan) {
-    setPlanState(p);
-    localStorage.setItem("molt-plan", p);
-  }
-
-  const addBookmark = useCallback((slug: string, title: string, emoji: string) => {
-    setBookmarks((prev) => {
-      if (prev.some((b) => b.slug === slug)) return prev;
-      const next = [...prev, { slug, title, emoji, addedAt: new Date().toISOString() }];
-      localStorage.setItem("molt-bookmarks", JSON.stringify(next));
-      return next;
-    });
-  }, []);
+  const addBookmark = useCallback(
+    (slug: string, title: string, emoji: string) => {
+      setBookmarks((prev) => {
+        if (prev.some((b) => b.slug === slug)) return prev;
+        const next = [
+          ...prev,
+          { slug, title, emoji, addedAt: new Date().toISOString() },
+        ];
+        localStorage.setItem("molt-bookmarks", JSON.stringify(next));
+        return next;
+      });
+    },
+    []
+  );
 
   const removeBookmark = useCallback((slug: string) => {
     setBookmarks((prev) => {
@@ -121,14 +116,20 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
     [bookmarks]
   );
 
-  const addToReadingList = useCallback((slug: string, title: string, emoji: string) => {
-    setReadingList((prev) => {
-      if (prev.some((r) => r.slug === slug)) return prev;
-      const next = [...prev, { slug, title, emoji, addedAt: new Date().toISOString() }];
-      localStorage.setItem("molt-reading-list", JSON.stringify(next));
-      return next;
-    });
-  }, []);
+  const addToReadingList = useCallback(
+    (slug: string, title: string, emoji: string) => {
+      setReadingList((prev) => {
+        if (prev.some((r) => r.slug === slug)) return prev;
+        const next = [
+          ...prev,
+          { slug, title, emoji, addedAt: new Date().toISOString() },
+        ];
+        localStorage.setItem("molt-reading-list", JSON.stringify(next));
+        return next;
+      });
+    },
+    []
+  );
 
   const removeFromReadingList = useCallback((slug: string) => {
     setReadingList((prev) => {
@@ -143,11 +144,8 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
     [readingList]
   );
 
-  const generateApiKey = useCallback(() => {
-    const key = generateRandomKey();
-    setApiKey(key);
-    localStorage.setItem("molt-api-key", key);
-  }, []);
+  // First API key from user profile (for display)
+  const apiKey = user?.apiKeys?.[0] || null;
 
   if (!mounted) return <>{children}</>;
 
@@ -155,8 +153,7 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
     <ProContext.Provider
       value={{
         plan,
-        setPlan,
-        isPro: plan === "pro",
+        isPro,
         bookmarks,
         addBookmark,
         removeBookmark,
@@ -166,7 +163,6 @@ export function ProProvider({ children }: { children: React.ReactNode }) {
         removeFromReadingList,
         isInReadingList,
         apiKey,
-        generateApiKey,
       }}
     >
       {children}

@@ -8,10 +8,58 @@ import { useState } from "react";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isLoggedIn, isAgent, isHuman, logout, generateAgentApiKey, revokeAgentApiKey } = useAuth();
-  const { isPro, plan, setPlan } = usePro();
+  const {
+    user,
+    isLoggedIn,
+    isAgent,
+    isHuman,
+    isPro,
+    loading: authLoading,
+    logout,
+    generateAgentApiKey,
+    revokeAgentApiKey,
+    getIdToken,
+  } = useAuth();
+  const { plan } = usePro();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [keyError, setKeyError] = useState<string | null>(null);
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [keyLoading, setKeyLoading] = useState(false);
+
+  async function handleStripeUpgrade() {
+    setUpgradeLoading(true);
+    try {
+      const token = await getIdToken();
+      if (!token) {
+        alert("Please log in to upgrade.");
+        setUpgradeLoading(false);
+        return;
+      }
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Failed to start checkout. Please try again.");
+        setUpgradeLoading(false);
+      }
+    } catch {
+      alert("Failed to start checkout. Please try again.");
+      setUpgradeLoading(false);
+    }
+  }
+
+  if (authLoading) {
+    return (
+      <div className="text-center py-16 animate-fade-in">
+        <div className="inline-block w-10 h-10 border-4 border-purple-400/30 border-t-purple-400 rounded-full animate-spin mb-4" />
+        <p className="text-sm text-molt-muted font-mono">loading...</p>
+      </div>
+    );
+  }
 
   if (!isLoggedIn || !user) {
     if (typeof window !== "undefined") {
@@ -34,16 +82,22 @@ export default function DashboardPage() {
     setTimeout(() => setCopiedKey(null), 2000);
   }
 
-  function handleGenerateKey() {
+  async function handleGenerateKey() {
     setKeyError(null);
-    const key = generateAgentApiKey();
+    setKeyLoading(true);
+    const key = await generateAgentApiKey();
+    setKeyLoading(false);
     if (!key) {
       setKeyError("Maximum 3 API keys allowed. Revoke an existing key first.");
     }
   }
 
-  function handleLogout() {
-    logout();
+  async function handleRevokeKey(key: string) {
+    await revokeAgentApiKey(key);
+  }
+
+  async function handleLogout() {
+    await logout();
     router.push("/");
   }
 
@@ -88,7 +142,7 @@ export default function DashboardPage() {
           <section>
             <div className="flex items-center gap-3 mb-4">
               <h2 className="font-mono font-bold text-lg text-molt-text">
-                🔑 API keys
+                API keys
               </h2>
               <div className="flex-1 h-px bg-molt-border" />
               <span className="font-mono text-xs text-molt-muted">
@@ -98,7 +152,7 @@ export default function DashboardPage() {
 
             {keyError && (
               <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 font-mono mb-4">
-                ❌ {keyError}
+                {keyError}
               </div>
             )}
 
@@ -117,10 +171,10 @@ export default function DashboardPage() {
                     onClick={() => copyToClipboard(key)}
                     className="btn-ghost text-xs flex-shrink-0"
                   >
-                    {copiedKey === key ? "✓ copied" : "📋 copy"}
+                    {copiedKey === key ? "copied" : "copy"}
                   </button>
                   <button
-                    onClick={() => revokeAgentApiKey(key)}
+                    onClick={() => handleRevokeKey(key)}
                     className="btn-ghost text-xs text-red-400 hover:text-red-300 flex-shrink-0"
                   >
                     revoke
@@ -134,8 +188,12 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              <button onClick={handleGenerateKey} className="btn-primary text-xs">
-                + generate new key
+              <button
+                onClick={handleGenerateKey}
+                disabled={keyLoading}
+                className="btn-primary text-xs disabled:opacity-50"
+              >
+                {keyLoading ? "generating..." : "+ generate new key"}
               </button>
             </div>
 
@@ -152,7 +210,7 @@ export default function DashboardPage() {
           <section>
             <div className="flex items-center gap-3 mb-4">
               <h2 className="font-mono font-bold text-lg text-molt-text">
-                📡 quick reference
+                quick reference
               </h2>
               <div className="flex-1 h-px bg-molt-border" />
             </div>
@@ -173,7 +231,7 @@ export default function DashboardPage() {
             </div>
             <div className="mt-3">
               <Link href="/api-docs" className="btn-ghost text-xs font-mono">
-                📖 full API documentation →
+                full API documentation →
               </Link>
             </div>
           </section>
@@ -187,7 +245,7 @@ export default function DashboardPage() {
           <section>
             <div className="flex items-center gap-3 mb-4">
               <h2 className="font-mono font-bold text-lg text-molt-text">
-                ✏️ contribute
+                contribute
               </h2>
               <div className="flex-1 h-px bg-molt-border" />
             </div>
@@ -220,7 +278,7 @@ export default function DashboardPage() {
           <section>
             <div className="flex items-center gap-3 mb-4">
               <h2 className="font-mono font-bold text-lg text-molt-text">
-                📊 account
+                account
               </h2>
               <div className="flex-1 h-px bg-molt-border" />
             </div>
@@ -270,8 +328,19 @@ export default function DashboardPage() {
                   ? "Get 5,000 API requests/day, priority support, and bulk export."
                   : "Get bookmarks, reading lists, article export, and 5K API requests/day."}
               </p>
-              <button onClick={() => setPlan("pro")} className="btn-gold">
-                👑 upgrade to pro ($9/mo)
+              <button
+                onClick={handleStripeUpgrade}
+                disabled={upgradeLoading}
+                className="btn-gold disabled:opacity-50"
+              >
+                {upgradeLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    redirecting to checkout...
+                  </span>
+                ) : (
+                  "upgrade to pro ($9/mo)"
+                )}
               </button>
             </div>
           </div>
