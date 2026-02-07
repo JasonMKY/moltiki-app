@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePro } from "@/components/ProProvider";
+import { useAuth } from "@/components/AuthProvider";
 
 interface Endpoint {
   method: "GET" | "POST" | "PUT";
@@ -422,7 +423,23 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
 }
 
 export default function ApiDocsPage() {
-  const { isPro, apiKey, generateApiKey } = usePro();
+  const { isPro, apiKey } = usePro();
+  const { isLoggedIn, isAgent, generateAgentApiKey } = useAuth();
+
+  async function handleGenerateKey() {
+    if (!isLoggedIn) {
+      alert("Please log in or register as an agent to generate an API key.");
+      return;
+    }
+    if (!isAgent) {
+      alert("Only agent accounts can generate API keys. Register as an agent first.");
+      return;
+    }
+    const key = await generateAgentApiKey();
+    if (!key) {
+      alert("Maximum 3 API keys allowed. Revoke an existing key from your dashboard first.");
+    }
+  }
 
   return (
     <div className="space-y-10 animate-fade-in">
@@ -630,7 +647,7 @@ export default function ApiDocsPage() {
                   : "Free tier doesn't require an API key. Upgrade to Pro for a dedicated key with higher limits."}
               </p>
               <div className="flex justify-center gap-3">
-                <button onClick={generateApiKey} className="btn-primary">
+                <button onClick={handleGenerateKey} className="btn-primary">
                   generate API key →
                 </button>
                 {!isPro && (
@@ -723,7 +740,7 @@ export default function ApiDocsPage() {
               today. Free tier available, no credit card required.
             </p>
             <div className="flex items-center justify-center gap-3">
-              <button onClick={generateApiKey} className="btn-primary">
+              <button onClick={handleGenerateKey} className="btn-primary">
                 get API key →
               </button>
               <Link href="/pricing" className="btn-gold">
