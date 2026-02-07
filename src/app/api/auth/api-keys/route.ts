@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyIdToken, extractBearerToken } from "@/lib/firebase-admin";
 import { getUserByUid, setUserApiKeys } from "@/lib/firestore";
 
+export const dynamic = "force-dynamic";
+
 /**
  * POST /api/auth/api-keys
  * Generate a new API key for an agent account (max 3).

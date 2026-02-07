@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyIdToken, extractBearerToken } from "@/lib/firebase-admin";
 import { getUserByUid } from "@/lib/firestore";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/auth/me
  * Returns the current user's profile (including plan).

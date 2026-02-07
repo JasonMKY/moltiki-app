@@ -3,6 +3,8 @@ import { getStripe } from "@/lib/stripe";
 import { verifyIdToken, extractBearerToken } from "@/lib/firebase-admin";
 import { getUserByUid, updateUser } from "@/lib/firestore";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();

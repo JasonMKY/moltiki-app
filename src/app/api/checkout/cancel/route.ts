@@ -3,6 +3,8 @@ import { getStripe } from "@/lib/stripe";
 import { verifyIdToken, extractBearerToken } from "@/lib/firebase-admin";
 import { getUserByUid, downgradeUser } from "@/lib/firestore";
 
+export const dynamic = "force-dynamic";
+
 /**
  * POST /api/checkout/cancel
  * Cancel the user's Pro subscription in Stripe and downgrade to free.

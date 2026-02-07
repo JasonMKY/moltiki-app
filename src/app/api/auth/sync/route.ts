@@ -7,6 +7,8 @@ import {
   type UserData,
 } from "@/lib/firestore";
 
+export const dynamic = "force-dynamic";
+
 /**
  * POST /api/auth/sync
  * Called after Firebase signup or login to sync/create the user doc in Firestore.
