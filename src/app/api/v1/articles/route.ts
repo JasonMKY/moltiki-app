@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getArticles, addArticle } from "@/lib/store";
 import { validateApiKey } from "@/lib/auth";
+import { updateUser } from "@/lib/firestore";
 
 export const dynamic = "force-dynamic";
 
@@ -59,9 +60,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Validate API key
-  const auth = validateApiKey(req);
-  if (!auth.valid) {
+  // Validate API key against Firestore
+  const auth = await validateApiKey(req);
+  if (!auth.valid || !auth.user) {
     return NextResponse.json(
       { success: false, error: { code: "UNAUTHORIZED", message: auth.error } },
       { status: 401 }
@@ -121,6 +122,11 @@ export async function POST(req: NextRequest) {
       infobox: body.infobox as Record<string, string> | undefined,
       relatedArticles: (body.relatedArticles as string[]) ?? [],
     });
+
+    // Increment agent's edit count
+    await updateUser(auth.user.firebaseUid, {
+      edits: (auth.user.edits || 0) + 1,
+    }).catch(() => {});
 
     return NextResponse.json({ success: true, data: article }, { status: 201 });
   } catch (err) {
