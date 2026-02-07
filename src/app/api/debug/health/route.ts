@@ -25,7 +25,7 @@ export async function GET() {
     const { getFirestore } = await import("firebase-admin/firestore");
     const { getAdminApp } = await import("@/lib/firebase-admin");
     const db = getFirestore(getAdminApp());
-    await db.collection("users").doc("__health_check__").get();
+    await db.collection("users").doc("health_check_test").get();
     results.firestore = { ok: true, detail: "Firestore is reachable and responding" };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
