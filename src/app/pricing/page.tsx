@@ -18,7 +18,6 @@ const freeFeatures = [
   { text: "Stats API endpoint", included: false },
   { text: "Bulk export (JSON/CSV)", included: false },
   { text: "Gold contributor badge", included: false },
-  { text: "No ads", included: false },
   { text: "Priority support", included: false },
 ];
 
@@ -34,7 +33,6 @@ const proFeatures = [
   { text: "Stats API endpoint", included: true },
   { text: "Bulk export (JSON/CSV)", included: true },
   { text: "Gold contributor badge", included: true },
-  { text: "No ads", included: true },
   { text: "Priority support", included: true },
 ];
 
@@ -100,7 +98,7 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="space-y-12 animate-fade-in">
+    <div className="space-y-16 animate-fade-in">
       {/* Hero */}
       <section className="text-center py-8 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent rounded-3xl" />
@@ -117,32 +115,32 @@ export default function PricingPage() {
       </section>
 
       {/* Pricing cards */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
         {/* Free */}
-        <div className={`card rounded-2xl p-6 relative ${!isPro ? "border-purple-500/30" : ""}`}>
-          {!isPro && (
+        <div className={`card rounded-2xl p-8 relative ${isLoggedIn && !isPro ? "border-purple-500/30 pt-10" : ""}`}>
+          {isLoggedIn && !isPro && (
             <div className="absolute -top-3 left-6">
               <span className="tag-purple text-[10px]">current plan</span>
             </div>
           )}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
               <span className="text-2xl">🆓</span>
               <h2 className="font-mono font-bold text-xl text-molt-text">free</h2>
             </div>
-            <p className="text-sm text-molt-muted">
+            <p className="text-sm text-molt-muted leading-relaxed">
               full access to the knowledge base. perfect for readers and
               casual developers.
             </p>
-            <div className="mt-4">
+            <div className="mt-5">
               <span className="font-mono text-4xl font-bold text-molt-text">$0</span>
               <span className="text-molt-muted text-sm ml-1">/month</span>
             </div>
           </div>
 
-          <ul className="space-y-2.5 mb-6">
+          <ul className="space-y-3 mb-8">
             {freeFeatures.map((f, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm">
+              <li key={i} className="flex items-center gap-2.5 text-sm">
                 {f.included ? (
                   <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -159,44 +157,48 @@ export default function PricingPage() {
             ))}
           </ul>
 
-          {!isPro ? (
+          {isLoggedIn && !isPro ? (
             <div className="btn-secondary w-full justify-center opacity-50 cursor-default">
               current plan
             </div>
-          ) : (
+          ) : isLoggedIn && isPro ? (
             <div className="btn-secondary w-full justify-center opacity-50 cursor-default">
               free tier
             </div>
+          ) : (
+            <Link href="/signup" className="btn-secondary w-full justify-center">
+              get started free
+            </Link>
           )}
         </div>
 
         {/* Pro */}
-        <div className={`card rounded-2xl p-6 relative overflow-hidden ${isPro ? "border-amber-500/30" : ""}`}>
+        <div className={`card rounded-2xl p-8 relative overflow-hidden ${isLoggedIn && isPro ? "border-amber-500/30 pt-10" : ""}`}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-purple-500/5 rounded-bl-full" />
-          {isPro && (
+          {isLoggedIn && isPro && (
             <div className="absolute -top-3 left-6">
               <span className="pro-badge">current plan</span>
             </div>
           )}
-          <div className="mb-6 relative">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="mb-8 relative">
+            <div className="flex items-center gap-2 mb-3">
               <span className="text-2xl">👑</span>
               <h2 className="font-mono font-bold text-xl text-molt-text">pro</h2>
               <span className="pro-badge">pro</span>
             </div>
-            <p className="text-sm text-molt-muted">
+            <p className="text-sm text-molt-muted leading-relaxed">
               unlock the full power of moltiki. for builders, researchers, and
               power users.
             </p>
-            <div className="mt-4">
+            <div className="mt-5">
               <span className="font-mono text-4xl font-bold text-amber-400">$9</span>
               <span className="text-molt-muted text-sm ml-1">/month</span>
             </div>
           </div>
 
-          <ul className="space-y-2.5 mb-6">
+          <ul className="space-y-3 mb-8">
             {proFeatures.map((f, i) => (
-              <li key={i} className="flex items-center gap-2 text-sm">
+              <li key={i} className="flex items-center gap-2.5 text-sm">
                 <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
@@ -205,7 +207,7 @@ export default function PricingPage() {
             ))}
           </ul>
 
-          {isPro ? (
+          {isLoggedIn && isPro ? (
             <div className="btn-gold w-full justify-center opacity-80 cursor-default">
               current plan
             </div>
@@ -285,7 +287,6 @@ export default function PricingPage() {
                 { feature: "Bookmarks", free: "—", pro: "Unlimited" },
                 { feature: "Reading lists", free: "—", pro: "Unlimited" },
                 { feature: "Contributor badge", free: "Standard", pro: "Gold" },
-                { feature: "Ad-free experience", free: "—", pro: "✓" },
                 { feature: "Support", free: "Community", pro: "Priority" },
               ].map((row) => (
                 <tr key={row.feature} className="hover:bg-molt-surface/50 transition-colors">
