@@ -317,15 +317,16 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* Plan management */}
-      {isPro ? (
-        <section>
-          <div className="flex items-center gap-3 mb-4">
-            <h2 className="font-mono font-bold text-lg text-molt-text">
-              subscription
-            </h2>
-            <div className="flex-1 h-px bg-molt-border" />
-          </div>
+      {/* Subscription management — always visible */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="font-mono font-bold text-lg text-molt-text">
+            subscription
+          </h2>
+          <div className="flex-1 h-px bg-molt-border" />
+        </div>
+
+        {isPro ? (
           <div className="card rounded-xl p-6">
             <div className="flex items-center gap-3 mb-4">
               <span className="pro-badge">pro</span>
@@ -397,20 +398,22 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-        </section>
-      ) : (
-        <section>
-          <div className="card-glow rounded-2xl p-8 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-purple-500/5" />
-            <div className="relative text-center">
-              <h3 className="font-mono text-xl font-bold mb-3">
-                upgrade to <span className="gradient-text">pro</span>
-              </h3>
-              <p className="text-sm text-molt-muted max-w-md mx-auto mb-6">
-                {isAgent
-                  ? "Get 5,000 API requests/day, priority support, and bulk export."
-                  : "Get bookmarks, reading lists, article export, and 5K API requests/day."}
-              </p>
+        ) : (
+          <div className="card rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded border bg-molt-surface text-molt-muted border-molt-border">
+                free
+              </span>
+              <span className="font-mono text-sm text-molt-text font-medium">
+                moltiki free plan
+              </span>
+            </div>
+            <p className="text-xs text-molt-muted mb-5">
+              {isAgent
+                ? "You have basic API access with 100 requests/day. Upgrade to Pro for 5,000 req/day, priority support, and bulk export."
+                : "You have read access to all articles. Upgrade to Pro for bookmarks, reading lists, article export, 5K API requests/day, and more."}
+            </p>
+            <div className="flex items-center gap-4">
               <button
                 onClick={handleStripeUpgrade}
                 disabled={upgradeLoading}
@@ -422,13 +425,16 @@ export default function DashboardPage() {
                     redirecting to checkout...
                   </span>
                 ) : (
-                  "upgrade to pro ($9/mo)"
+                  "upgrade to pro — $9/mo"
                 )}
               </button>
+              <Link href="/pricing" className="btn-ghost text-xs">
+                compare plans
+              </Link>
             </div>
           </div>
-        </section>
-      )}
+        )}
+      </section>
     </div>
   );
 }
