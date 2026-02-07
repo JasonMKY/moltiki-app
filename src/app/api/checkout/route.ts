@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { verifyIdToken, extractBearerToken } from "@/lib/firebase-admin";
-import dbConnect from "@/lib/mongodb";
-import UserModel from "@/lib/models/User";
+import { getUserByUid, updateUser } from "@/lib/firestore";
 
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();
     const priceId = process.env.STRIPE_PRO_PRICE_ID;
 
-    if (!priceId) {
+    if (!priceId || priceId === "price_REPLACE_ME") {
       return NextResponse.json(
-        { error: "Stripe price not configured" },
+        { error: "Stripe is not configured yet. Please set STRIPE_PRO_PRICE_ID in .env.local." },
         { status: 500 }
       );
     }
@@ -33,11 +32,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get or create Stripe customer for this user
-    await dbConnect();
-    const user = await UserModel.findOne({ firebaseUid: decoded.uid });
+    // Get user from Firestore
+    const user = await getUserByUid(decoded.uid);
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
     }
 
     if (user.plan === "pro") {
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get or create Stripe customer
     let customerId = user.stripeCustomerId;
     if (!customerId) {
       const customer = await stripe.customers.create({
@@ -54,8 +56,7 @@ export async function POST(req: NextRequest) {
         metadata: { firebaseUid: decoded.uid, username: user.username },
       });
       customerId = customer.id;
-      user.stripeCustomerId = customerId;
-      await user.save();
+      await updateUser(decoded.uid, { stripeCustomerId: customerId });
     }
 
     const origin = req.headers.get("origin") || "http://localhost:3000";

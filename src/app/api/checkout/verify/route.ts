@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
-import dbConnect from "@/lib/mongodb";
-import UserModel from "@/lib/models/User";
+import { updateUser } from "@/lib/firestore";
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,22 +20,18 @@ export async function GET(req: NextRequest) {
       const firebaseUid = session.metadata?.firebaseUid;
 
       if (firebaseUid) {
-        // Update user plan in MongoDB
-        await dbConnect();
-        await UserModel.findOneAndUpdate(
-          { firebaseUid },
-          {
-            plan: "pro",
-            stripeCustomerId:
-              typeof session.customer === "string"
-                ? session.customer
-                : session.customer?.toString(),
-            stripeSubscriptionId:
-              typeof session.subscription === "string"
-                ? session.subscription
-                : session.subscription?.toString(),
-          }
-        );
+        // Update user plan in Firestore
+        await updateUser(firebaseUid, {
+          plan: "pro",
+          stripeCustomerId:
+            typeof session.customer === "string"
+              ? session.customer
+              : session.customer?.toString(),
+          stripeSubscriptionId:
+            typeof session.subscription === "string"
+              ? session.subscription
+              : session.subscription?.toString(),
+        });
       }
 
       return NextResponse.json({
@@ -48,7 +43,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ paid: false });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Verification failed";
+    const message =
+      err instanceof Error ? err.message : "Verification failed";
     console.error("Stripe verify error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }

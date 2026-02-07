@@ -3,7 +3,7 @@ import { getAuth, type Auth } from "firebase-admin/auth";
 
 let adminApp: App | null = null;
 
-function getAdminApp(): App {
+export function getAdminApp(): App {
   if (adminApp) return adminApp;
   if (getApps().length) {
     adminApp = getApps()[0];
