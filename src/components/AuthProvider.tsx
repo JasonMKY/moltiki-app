@@ -94,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  /** Fetch user profile from our API. */
+  /** Fetch user profile from our API (Firestore). */
   const fetchUserProfile = useCallback(
     async (fbUser: FirebaseUser): Promise<User | null> => {
       try {
@@ -102,17 +102,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch("/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          console.error(
+            `[Auth] Failed to fetch profile: ${res.status}`,
+            data.error || ""
+          );
+          return null;
+        }
         const data = await res.json();
         return data.user as User;
-      } catch {
+      } catch (err) {
+        console.error("[Auth] fetchUserProfile error:", err);
         return null;
       }
     },
     []
   );
 
-  /** Sync user to MongoDB (called after login/signup). */
+  /** Sync user to Firestore (called after login/signup). */
   const syncUser = useCallback(
     async (
       fbUser: FirebaseUser,
@@ -135,11 +143,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const data = await res.json();
         if (!res.ok) {
+          console.error(
+            `[Auth] Sync failed: ${res.status}`,
+            data.error || ""
+          );
           return { user: null, error: data.error || "Sync failed" };
         }
         return { user: data.user as User };
-      } catch {
-        return { user: null, error: "Failed to sync account" };
+      } catch (err) {
+        console.error("[Auth] syncUser error:", err);
+        return { user: null, error: "Failed to sync account. Check that Firestore is enabled in Firebase Console." };
       }
     },
     []
@@ -150,8 +163,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       firebaseUserRef.current = fbUser;
       if (fbUser) {
-        // User is signed in — fetch profile from our DB
+        // User is signed in — fetch profile from Firestore
         const profile = await fetchUserProfile(fbUser);
+        if (!profile) {
+          console.warn(
+            "[Auth] Firebase user exists but no Firestore profile found.",
+            "UID:", fbUser.uid,
+            "Email:", fbUser.email
+          );
+        }
         setUser(profile);
       } else {
         setUser(null);

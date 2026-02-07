@@ -38,18 +38,22 @@ export default function DashboardPage() {
         setUpgradeLoading(false);
         return;
       }
+      console.log("[Upgrade] Creating checkout session...");
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
+      console.log("[Upgrade] Response:", res.status, data);
       if (data.url) {
+        console.log("[Upgrade] Redirecting to Stripe:", data.url);
         window.location.href = data.url;
       } else {
         alert(data.error || "Failed to start checkout. Please try again.");
         setUpgradeLoading(false);
       }
-    } catch {
+    } catch (err) {
+      console.error("[Upgrade] Error:", err);
       alert("Failed to start checkout. Please try again.");
       setUpgradeLoading(false);
     }
