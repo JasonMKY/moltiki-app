@@ -8,6 +8,7 @@ export interface IUser {
   type: "human" | "agent";
   plan: "free" | "pro";
   stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
   apiKeys: string[];
   edits: number;
   createdAt: string;
@@ -24,6 +25,7 @@ const UserSchema = new Schema<IUserDocument>(
     type: { type: String, enum: ["human", "agent"], required: true },
     plan: { type: String, enum: ["free", "pro"], default: "free" },
     stripeCustomerId: { type: String },
+    stripeSubscriptionId: { type: String },
     apiKeys: { type: [String], default: [] },
     edits: { type: Number, default: 0 },
     createdAt: { type: String, default: () => new Date().toISOString() },

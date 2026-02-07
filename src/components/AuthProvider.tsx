@@ -30,6 +30,7 @@ export interface User {
   edits: number;
   createdAt: string;
   stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
 }
 
 interface AuthContextType {

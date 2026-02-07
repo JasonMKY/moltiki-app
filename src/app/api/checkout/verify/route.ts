@@ -31,6 +31,10 @@ export async function GET(req: NextRequest) {
               typeof session.customer === "string"
                 ? session.customer
                 : session.customer?.toString(),
+            stripeSubscriptionId:
+              typeof session.subscription === "string"
+                ? session.subscription
+                : session.subscription?.toString(),
           }
         );
       }

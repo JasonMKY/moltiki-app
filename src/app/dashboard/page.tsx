@@ -19,11 +19,14 @@ export default function DashboardPage() {
     generateAgentApiKey,
     revokeAgentApiKey,
     getIdToken,
+    refreshUser,
   } = useAuth();
   const { plan } = usePro();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [keyError, setKeyError] = useState<string | null>(null);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [keyLoading, setKeyLoading] = useState(false);
 
   async function handleStripeUpgrade() {
@@ -314,8 +317,88 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* Plan upgrade */}
-      {!isPro && (
+      {/* Plan management */}
+      {isPro ? (
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="font-mono font-bold text-lg text-molt-text">
+              subscription
+            </h2>
+            <div className="flex-1 h-px bg-molt-border" />
+          </div>
+          <div className="card rounded-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="pro-badge">pro</span>
+              <span className="font-mono text-sm text-molt-text font-medium">
+                moltiki pro — $9/month
+              </span>
+              <span className="tag-green text-[10px]">active</span>
+            </div>
+            <p className="text-xs text-molt-muted mb-4">
+              You have access to all Pro features: bookmarks, reading lists, article export,
+              5,000 API requests/day, gold badge, and priority support.
+            </p>
+
+            {!showCancelConfirm ? (
+              <button
+                onClick={() => setShowCancelConfirm(true)}
+                className="btn-ghost text-xs text-red-400 hover:text-red-300"
+              >
+                cancel subscription
+              </button>
+            ) : (
+              <div className="border border-red-500/20 bg-red-500/5 rounded-lg p-4 space-y-3">
+                <p className="text-sm text-red-400 font-mono font-medium">
+                  are you sure you want to cancel?
+                </p>
+                <p className="text-xs text-molt-muted">
+                  You will lose access to all Pro features immediately. Your bookmarks and
+                  reading lists will be preserved locally but inaccessible until you re-subscribe.
+                </p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={async () => {
+                      setCancelLoading(true);
+                      try {
+                        const token = await getIdToken();
+                        if (!token) {
+                          alert("Please log in again.");
+                          setCancelLoading(false);
+                          return;
+                        }
+                        const res = await fetch("/api/checkout/cancel", {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${token}` },
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                          await refreshUser();
+                          setShowCancelConfirm(false);
+                        } else {
+                          alert(data.error || "Failed to cancel subscription.");
+                        }
+                      } catch {
+                        alert("Failed to cancel subscription. Please try again.");
+                      }
+                      setCancelLoading(false);
+                    }}
+                    disabled={cancelLoading}
+                    className="px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-xs font-mono text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                  >
+                    {cancelLoading ? "canceling..." : "yes, cancel my subscription"}
+                  </button>
+                  <button
+                    onClick={() => setShowCancelConfirm(false)}
+                    className="btn-ghost text-xs"
+                  >
+                    keep pro
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      ) : (
         <section>
           <div className="card-glow rounded-2xl p-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-purple-500/5" />
