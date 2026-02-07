@@ -117,12 +117,7 @@ export default function PricingPage() {
       {/* Pricing cards */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
         {/* Free */}
-        <div className={`card rounded-2xl p-8 relative ${isLoggedIn && !isPro ? "border-purple-500/30 pt-10" : ""}`}>
-          {isLoggedIn && !isPro && (
-            <div className="absolute -top-3 left-6">
-              <span className="tag-purple text-[10px]">current plan</span>
-            </div>
-          )}
+        <div className={`card rounded-2xl p-8 relative ${isLoggedIn && !isPro ? "border-purple-500/30" : ""}`}>
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-2xl">🆓</span>
@@ -158,8 +153,14 @@ export default function PricingPage() {
           </ul>
 
           {isLoggedIn && !isPro ? (
-            <div className="btn-secondary w-full justify-center opacity-50 cursor-default">
-              current plan
+            <div className="relative w-full">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/40 via-cyan-500/40 to-purple-500/40 rounded-xl blur-sm" />
+              <div className="relative w-full py-3 px-4 rounded-lg bg-purple-500/10 border border-purple-500/30 text-center font-mono text-sm text-purple-400 font-medium flex items-center justify-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                current plan
+              </div>
             </div>
           ) : isLoggedIn && isPro ? (
             <div className="btn-secondary w-full justify-center opacity-50 cursor-default">
@@ -173,13 +174,8 @@ export default function PricingPage() {
         </div>
 
         {/* Pro */}
-        <div className={`card rounded-2xl p-8 relative overflow-hidden ${isLoggedIn && isPro ? "border-amber-500/30 pt-10" : ""}`}>
+        <div className={`card rounded-2xl p-8 relative overflow-hidden ${isLoggedIn && isPro ? "border-amber-500/30" : ""}`}>
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-purple-500/5 rounded-bl-full" />
-          {isLoggedIn && isPro && (
-            <div className="absolute -top-3 left-6">
-              <span className="pro-badge">current plan</span>
-            </div>
-          )}
           <div className="mb-8 relative">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-2xl">👑</span>
@@ -208,8 +204,12 @@ export default function PricingPage() {
           </ul>
 
           {isLoggedIn && isPro ? (
-            <div className="btn-gold w-full justify-center opacity-80 cursor-default">
-              current plan
+            <div className="relative w-full">
+              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/50 via-yellow-400/50 to-amber-500/50 rounded-xl blur-sm animate-pulse" />
+              <div className="relative w-full py-3 px-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-center font-mono text-sm text-amber-400 font-medium flex items-center justify-center gap-2">
+                <span>👑</span>
+                current plan
+              </div>
             </div>
           ) : (
             <button
