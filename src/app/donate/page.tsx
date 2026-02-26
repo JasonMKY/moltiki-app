@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -39,6 +39,14 @@ const CRYPTO_WALLETS = [
 ];
 
 export default function DonatePage() {
+  return (
+    <Suspense fallback={<div className="text-center py-20 text-molt-muted font-mono text-sm">Loading...</div>}>
+      <DonateContent />
+    </Suspense>
+  );
+}
+
+function DonateContent() {
   const searchParams = useSearchParams();
   const success = searchParams.get("success") === "true";
 
