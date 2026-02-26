@@ -19,7 +19,7 @@ export function DonationBanner() {
   if (dismissed) return null;
 
   return (
-    <div className="relative bg-gradient-to-r from-purple-500/10 via-amber-500/10 to-cyan-500/10 border-b border-purple-500/20">
+    <div className="sticky top-0 z-[60] bg-gradient-to-r from-purple-500/10 via-amber-500/10 to-cyan-500/10 border-b border-purple-500/20 backdrop-blur-xl">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-center gap-3 sm:gap-4 text-center">
           <span className="text-lg flex-shrink-0 hidden sm:block">💜</span>
