@@ -28,8 +28,10 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <ProProvider>
-              <DonationBanner />
-              <Header />
+              <div className="sticky top-0 z-50 backdrop-blur-xl">
+                <DonationBanner />
+                <Header />
+              </div>
               <div className="flex min-h-[calc(100vh-64px)]">
                 <Sidebar />
                 <main className="flex-1 w-full">
