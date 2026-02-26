@@ -2,19 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { categories } from "@/lib/articles";
 import { usePro } from "./ProProvider";
 import { useAuth } from "./AuthProvider";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+interface RecentArticle {
+  slug: string;
+  title: string;
+  emoji: string;
+  lastEdited: string;
+}
 
 export function Sidebar() {
   const pathname = usePathname();
   const { isPro, bookmarks, readingList } = usePro();
   const { isLoggedIn, isAgent, user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [recentArticles, setRecentArticles] = useState<RecentArticle[]>([]);
+
+  useEffect(() => {
+    fetch("/api/articles/recent")
+      .then((r) => r.json())
+      .then(setRecentArticles)
+      .catch(() => {});
+  }, [pathname]);
 
   const navItems = [
     { href: "/", icon: "🏠", label: "main page" },
+    { href: "/recent", icon: "🕐", label: "recent articles" },
     { href: "/search", icon: "🔍", label: "explore" },
     { href: "/random", icon: "🎲", label: "random article" },
     { href: "/changelog", icon: "📋", label: "changelog" },
@@ -134,30 +149,35 @@ export function Sidebar() {
               </div>
             )}
 
-            {/* Categories */}
+            {/* Recent Articles */}
             <div>
-              <h3 className="font-mono text-[10px] uppercase tracking-widest text-molt-muted mb-3">
-                categories
+              <h3 className="font-mono text-[10px] uppercase tracking-widest text-molt-muted mb-3 flex items-center justify-between">
+                <span>recent articles</span>
+                <Link href="/recent" className="text-purple-400 hover:text-purple-300 transition-colors">
+                  all →
+                </Link>
               </h3>
               <ul className="space-y-1">
-                {categories.map((cat) => (
-                  <li key={cat.slug}>
+                {recentArticles.map((article) => (
+                  <li key={article.slug}>
                     <Link
-                      href={`/category/${cat.slug}`}
+                      href={`/article/${article.slug}`}
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-md font-mono text-xs transition-colors ${
-                        pathname === `/category/${cat.slug}`
+                        pathname === `/article/${article.slug}`
                           ? "bg-cyan-500/10 text-cyan-400"
                           : "text-molt-muted hover:text-molt-text hover:bg-molt-surface"
                       }`}
                     >
-                      <span>{cat.emoji}</span>
-                      <span className="truncate">{cat.name}</span>
-                      <span className="ml-auto text-[10px] text-molt-muted/50">
-                        {cat.articleCount}
-                      </span>
+                      <span>{article.emoji}</span>
+                      <span className="truncate flex-1">{article.title}</span>
                     </Link>
                   </li>
                 ))}
+                {recentArticles.length === 0 && (
+                  <li className="px-3 py-1.5 font-mono text-[10px] text-molt-muted/50">
+                    loading...
+                  </li>
+                )}
               </ul>
             </div>
 

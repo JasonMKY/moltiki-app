@@ -3,7 +3,6 @@ import { ArticleCard } from "@/components/ArticleCard";
 import { HomeCTA } from "@/components/HomeCTA";
 import {
   getArticles,
-  getCategories,
   getDidYouKnow,
   getFeaturedArticles,
   getTotalStats,
@@ -12,9 +11,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [articles, categories, didYouKnow, featured, stats] = await Promise.all([
+  const [articles, didYouKnow, featured, stats] = await Promise.all([
     getArticles(),
-    getCategories(),
     getDidYouKnow(),
     getFeaturedArticles(),
     getTotalStats(),
@@ -172,53 +170,6 @@ export default async function HomePage() {
           </div>
         </div>
       </div>
-
-      {/* Categories Grid */}
-      <section>
-        <div className="flex items-center gap-3 mb-4">
-          <h2 className="font-mono font-bold text-lg text-molt-text">
-            📁 browse by category
-          </h2>
-          <div className="flex-1 h-px bg-molt-border" />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {categories.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/category/${cat.slug}`}
-              className="card p-4 rounded-lg group"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-xl">{cat.emoji}</span>
-                <h3 className="font-mono text-sm font-semibold text-molt-text group-hover:text-purple-400 transition-colors">
-                  {cat.name}
-                </h3>
-              </div>
-              <p className="text-xs text-molt-muted leading-relaxed line-clamp-2">
-                {cat.description}
-              </p>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="text-[10px] font-mono text-molt-muted/50">
-                  {cat.articleCount} articles
-                </span>
-                <svg
-                  className="w-3 h-3 text-molt-muted/30 group-hover:text-molt-muted transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
 
       {/* All Articles */}
       <section>
