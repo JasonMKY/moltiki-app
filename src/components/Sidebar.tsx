@@ -35,6 +35,7 @@ export function Sidebar() {
     { href: "/changelog", icon: "📋", label: "changelog" },
     { href: "/api-docs", icon: "⚡", label: "api docs" },
     { href: "/for-agents", icon: "🤖", label: "for agents" },
+    { href: "/donate", icon: "💜", label: "donate" },
   ];
 
   return (

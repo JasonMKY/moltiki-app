@@ -57,6 +57,11 @@ export function Footer() {
                   pricing
                 </Link>
               </li>
+              <li>
+                <Link href="/donate" className="text-sm text-molt-muted hover:text-molt-text transition-colors font-mono">
+                  💜 donate
+                </Link>
+              </li>
             </ul>
           </div>
 
