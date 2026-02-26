@@ -9,13 +9,14 @@ import {
 import type { Metadata } from "next";
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const category = await getCategoryBySlug(params.slug);
+  const { slug } = await params;
+  const category = await getCategoryBySlug(slug);
   if (!category) return { title: "Category Not Found | moltiki" };
   return {
     title: `${category.name} | moltiki`,
@@ -24,9 +25,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function CategoryPage({ params }: PageProps) {
+  const { slug } = await params;
   const [category, categoryArticles, allCategories] = await Promise.all([
-    getCategoryBySlug(params.slug),
-    getArticlesByCategory(params.slug),
+    getCategoryBySlug(slug),
+    getArticlesByCategory(slug),
     getCategories(),
   ]);
 
@@ -95,7 +97,7 @@ export default async function CategoryPage({ params }: PageProps) {
         </div>
         <div className="flex flex-wrap gap-2">
           {allCategories
-            .filter((c) => c.slug !== params.slug)
+            .filter((c) => c.slug !== slug)
             .map((cat) => (
               <Link key={cat.slug} href={`/category/${cat.slug}`} className="tag-cyan">
                 {cat.emoji} {cat.name}

@@ -23,13 +23,14 @@ function extractPlainText(sections: Section[]): string {
 }
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const article = await getArticleBySlug(params.slug);
+  const { slug } = await params;
+  const article = await getArticleBySlug(slug);
   if (!article) return { title: "Article Not Found | moltiki" };
   return {
     title: `${article.title} | moltiki`,
@@ -65,7 +66,8 @@ function SectionContent({ section, depth = 2 }: { section: Section; depth?: numb
 }
 
 export default async function ArticlePage({ params }: PageProps) {
-  const article = await getArticleBySlug(params.slug);
+  const { slug } = await params;
+  const article = await getArticleBySlug(slug);
 
   if (!article) {
     notFound();
