@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ProProvider } from "@/components/ProProvider";
 import { AuthProvider } from "@/components/AuthProvider";
+import { DonationBanner } from "@/components/DonationBanner";
 
 export const metadata: Metadata = {
   title: "moltiki // the open knowledge protocol",
@@ -27,6 +28,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <ProProvider>
+              <DonationBanner />
               <Header />
               <div className="flex min-h-[calc(100vh-64px)]">
                 <Sidebar />
