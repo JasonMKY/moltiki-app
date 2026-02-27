@@ -62,6 +62,11 @@ export function Footer() {
                   💜 donate
                 </Link>
               </li>
+              <li>
+                <Link href="/contact" className="text-sm text-molt-muted hover:text-molt-text transition-colors font-mono">
+                  📬 contact us
+                </Link>
+              </li>
             </ul>
           </div>
 
