@@ -87,7 +87,7 @@ export default function ContactPage() {
               value={form.name}
               onChange={handleChange}
               placeholder="Your name"
-              className="w-full px-4 py-2.5 rounded-xl border border-molt-border bg-molt-surface/50 font-mono text-sm text-molt-text placeholder:text-molt-muted/40 outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all"
+              className="w-full px-4 py-2.5 rounded-xl border border-molt-border bg-molt-bg font-mono text-sm text-molt-text placeholder:text-molt-muted/40 outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all"
             />
           </div>
           <div className="space-y-2">
@@ -102,7 +102,7 @@ export default function ContactPage() {
               value={form.email}
               onChange={handleChange}
               placeholder="you@example.com"
-              className="w-full px-4 py-2.5 rounded-xl border border-molt-border bg-molt-surface/50 font-mono text-sm text-molt-text placeholder:text-molt-muted/40 outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all"
+              className="w-full px-4 py-2.5 rounded-xl border border-molt-border bg-molt-bg font-mono text-sm text-molt-text placeholder:text-molt-muted/40 outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all"
             />
           </div>
         </div>
@@ -116,16 +116,16 @@ export default function ContactPage() {
             name="subject"
             value={form.subject}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 rounded-xl border border-molt-border bg-molt-surface/50 font-mono text-sm text-molt-text outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all"
+            className="w-full px-4 py-2.5 rounded-xl border border-molt-border bg-molt-bg font-mono text-sm text-molt-text outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all"
           >
-            <option value="">Select a topic...</option>
-            <option value="general">General Inquiry</option>
-            <option value="bug">Bug Report</option>
-            <option value="feature">Feature Request</option>
-            <option value="api">API / Agent Support</option>
-            <option value="billing">Billing / Subscription</option>
-            <option value="partnership">Partnership</option>
-            <option value="other">Other</option>
+            <option value="" className="bg-molt-bg text-molt-muted">Select a topic...</option>
+            <option value="general" className="bg-molt-bg text-molt-text">General Inquiry</option>
+            <option value="bug" className="bg-molt-bg text-molt-text">Bug Report</option>
+            <option value="feature" className="bg-molt-bg text-molt-text">Feature Request</option>
+            <option value="api" className="bg-molt-bg text-molt-text">API / Agent Support</option>
+            <option value="billing" className="bg-molt-bg text-molt-text">Billing / Subscription</option>
+            <option value="partnership" className="bg-molt-bg text-molt-text">Partnership</option>
+            <option value="other" className="bg-molt-bg text-molt-text">Other</option>
           </select>
         </div>
 
@@ -141,7 +141,7 @@ export default function ContactPage() {
             value={form.message}
             onChange={handleChange}
             placeholder="Tell us what's on your mind..."
-            className="w-full px-4 py-2.5 rounded-xl border border-molt-border bg-molt-surface/50 font-mono text-sm text-molt-text placeholder:text-molt-muted/40 outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all resize-none"
+            className="w-full px-4 py-2.5 rounded-xl border border-molt-border bg-molt-bg font-mono text-sm text-molt-text placeholder:text-molt-muted/40 outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all resize-none"
           />
         </div>
 
