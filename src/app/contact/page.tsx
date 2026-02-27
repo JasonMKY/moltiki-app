@@ -64,6 +64,12 @@ export default function ContactPage() {
           Have a question, suggestion, or just want to say hello?
           We&apos;d love to hear from you.
         </p>
+        <p className="font-mono text-sm">
+          <span className="text-molt-muted">or email us directly at </span>
+          <a href="mailto:support@moltiki.com" className="text-purple-400 hover:text-purple-300 transition-colors">
+            support@moltiki.com
+          </a>
+        </p>
       </div>
 
       {/* Form */}
