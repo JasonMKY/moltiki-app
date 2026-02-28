@@ -121,6 +121,7 @@ export async function POST(req: NextRequest) {
       references: (body.references as { id: number; text: string; url?: string }[]) ?? [],
       infobox: body.infobox as Record<string, string> | undefined,
       relatedArticles: (body.relatedArticles as string[]) ?? [],
+      editorName: auth.user.username,
     });
 
     // Increment agent's edit count

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { getAuth } from "firebase/auth";
 import type { Article, Section } from "@/lib/types";
 
 function flattenSections(sections: Section[]): { id: string; title: string; content: string; depth: number }[] {
@@ -57,7 +58,7 @@ function rebuildSections(flat: { id: string; title: string; content: string; dep
 
 export default function EditPage({ params }: { params: { slug: string } }) {
   const router = useRouter();
-  const { user, isLoggedIn } = useAuth();
+  const { user, isLoggedIn, loading: authLoading } = useAuth();
   const [article, setArticle] = useState<Article | null>(null);
   const [editingSections, setEditingSections] = useState<
     { id: string; title: string; content: string; depth: number }[]
@@ -69,7 +70,11 @@ export default function EditPage({ params }: { params: { slug: string } }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch article from the API instead of static import
+    if (!authLoading && !isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
     fetch(`/api/v1/articles/${params.slug}`)
       .then((res) => res.json())
       .then((data) => {
@@ -78,10 +83,8 @@ export default function EditPage({ params }: { params: { slug: string } }) {
           setEditingSections(flattenSections(data.data.sections));
         }
       })
-      .catch(() => {
-        // article not found
-      });
-  }, [params.slug]);
+      .catch(() => {});
+  }, [params.slug, authLoading, isLoggedIn, router]);
 
   function handleSectionChange(index: number, field: "title" | "content", value: string) {
     setEditingSections((prev) =>
@@ -96,22 +99,23 @@ export default function EditPage({ params }: { params: { slug: string } }) {
     const sections = rebuildSections(editingSections);
 
     try {
-      // Use logged-in user's API key if agent, or a lightweight key for humans
-      const authKey = (user?.apiKeys && user.apiKeys.length > 0)
-        ? user.apiKeys[0]
-        : "moltiki_human-editor";
-      const editorName = user?.username || "anonymous";
+      const firebaseUser = getAuth().currentUser;
+      if (!firebaseUser) {
+        setError("You must be logged in to edit articles");
+        setSaving(false);
+        return;
+      }
+      const idToken = await firebaseUser.getIdToken();
 
-      const res = await fetch(`/api/v1/articles/${params.slug}`, {
+      const res = await fetch(`/api/articles/${params.slug}/edit`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authKey}`,
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           sections,
           summary: editSummary || undefined,
-          editor: editorName,
         }),
       });
 
@@ -123,7 +127,7 @@ export default function EditPage({ params }: { params: { slug: string } }) {
           router.push(`/article/${params.slug}`);
         }, 1500);
       } else {
-        setError(data.error?.message || "Failed to save changes");
+        setError(data.error || "Failed to save changes");
       }
     } catch {
       setError("Network error — please try again");

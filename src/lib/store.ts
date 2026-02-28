@@ -165,6 +165,7 @@ export async function addArticle(data: {
   references?: Article["references"];
   infobox?: Article["infobox"];
   relatedArticles?: string[];
+  editorName?: string;
 }): Promise<Article> {
   await dbConnect();
   const slug = slugify(data.title);
@@ -173,6 +174,8 @@ export async function addArticle(data: {
   if (existing) {
     throw new Error(`Article with slug "${slug}" already exists`);
   }
+
+  const editor = data.editorName || "api_bot";
 
   const article = await ArticleModel.create({
     slug,
@@ -191,8 +194,8 @@ export async function addArticle(data: {
     history: [
       {
         date: new Date().toISOString().slice(0, 10),
-        editor: "api_bot",
-        summary: "Initial article creation via API",
+        editor,
+        summary: `Article created by ${editor}`,
         diff: "+0 -0",
       },
     ],
@@ -216,7 +219,8 @@ export async function updateArticle(
       | "relatedArticles"
     >
   >,
-  editorName = "anonymous"
+  editorName = "anonymous",
+  editSummary?: string
 ): Promise<Article> {
   await dbConnect();
 
@@ -239,10 +243,12 @@ export async function updateArticle(
   article.lastEdited = new Date().toISOString().slice(0, 10);
   article.editors += 1;
 
+  const summary = editSummary || `Article updated by ${editorName}`;
+
   article.history.unshift({
     date: new Date().toISOString().slice(0, 10),
     editor: editorName,
-    summary: `Article updated via ${editorName === "anonymous" ? "web editor" : "API"}`,
+    summary,
     diff: "+0 -0",
   });
 

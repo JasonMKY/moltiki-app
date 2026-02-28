@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePro } from "./ProProvider";
+import { useAuth } from "./AuthProvider";
 
 interface ArticleActionsProps {
   slug: string;
@@ -10,7 +11,7 @@ interface ArticleActionsProps {
   lastEdited: string;
   editors: number;
   views: number;
-  articleContent: string; // plain text for export
+  articleContent: string;
 }
 
 export function ArticleActions({
@@ -22,6 +23,7 @@ export function ArticleActions({
   views,
   articleContent,
 }: ArticleActionsProps) {
+  const { isLoggedIn } = useAuth();
   const {
     isPro,
     isBookmarked,
@@ -51,9 +53,15 @@ export function ArticleActions({
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap mt-4">
-      <Link href={`/edit/${slug}`} className="btn-ghost text-xs">
-        ✏️ edit
-      </Link>
+      {isLoggedIn ? (
+        <Link href={`/edit/${slug}`} className="btn-ghost text-xs">
+          ✏️ edit
+        </Link>
+      ) : (
+        <Link href="/login" className="btn-ghost text-xs opacity-60" title="Log in to edit">
+          ✏️ edit
+        </Link>
+      )}
       <Link href={`/history/${slug}`} className="btn-ghost text-xs">
         📜 history
       </Link>
