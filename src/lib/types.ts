@@ -16,6 +16,7 @@ export interface HistoryEntry {
   editor: string;
   summary: string;
   diff: string;
+  snapshot?: Section[];
 }
 
 export interface Article {

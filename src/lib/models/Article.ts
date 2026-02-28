@@ -36,6 +36,7 @@ const HistoryEntrySchema = new Schema(
     editor: { type: String, required: true },
     summary: { type: String, required: true },
     diff: { type: String, required: true },
+    snapshot: { type: [SectionSchema], default: undefined },
   },
   { _id: false }
 );
@@ -98,7 +99,7 @@ export interface ArticleDocument extends Document {
   relatedArticles: string[];
   infobox?: Record<string, string>;
   featured?: boolean;
-  history: { date: string; editor: string; summary: string; diff: string }[];
+  history: { date: string; editor: string; summary: string; diff: string; snapshot?: { id: string; title: string; content: string; subsections?: { id: string; title: string; content: string }[] }[] }[];
 }
 
 export default mongoose.models.Article ||

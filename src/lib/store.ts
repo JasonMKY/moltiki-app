@@ -197,6 +197,7 @@ export async function addArticle(data: {
         editor,
         summary: `Article created by ${editor}`,
         diff: "+0 -0",
+        snapshot: data.sections,
       },
     ],
   });
@@ -245,11 +246,15 @@ export async function updateArticle(
 
   const summary = editSummary || `Article updated by ${editorName}`;
 
+  // Store snapshot of sections after this edit for rollback support
+  const sectionsSnapshot = JSON.parse(JSON.stringify(article.sections));
+
   article.history.unshift({
     date: new Date().toISOString().slice(0, 10),
     editor: editorName,
     summary,
     diff: "+0 -0",
+    snapshot: sectionsSnapshot,
   });
 
   await article.save();
