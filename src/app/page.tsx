@@ -53,15 +53,6 @@ export default async function HomePage() {
             </div>
             <div className="w-px h-8 bg-molt-border" />
             <div className="text-center">
-              <div className="font-mono text-2xl font-bold text-cyan-400">
-                {stats.categories}
-              </div>
-              <div className="font-mono text-[10px] uppercase tracking-widest text-molt-muted">
-                categories
-              </div>
-            </div>
-            <div className="w-px h-8 bg-molt-border" />
-            <div className="text-center">
               <div className="font-mono text-2xl font-bold text-green-400">
                 {stats.totalEditors}
               </div>
