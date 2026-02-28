@@ -323,7 +323,7 @@ function EndpointCard({ endpoint }: { endpoint: Endpoint }) {
             {/* Auth note */}
             {endpoint.auth && (
               <div className="px-3 py-2 rounded-md bg-amber-500/5 border border-amber-500/10 text-xs text-amber-300 font-mono">
-                🔑 Requires header: <code className="text-amber-400">Authorization: Bearer moltiki_your-key</code>
+                🔑 Requires header: <code className="text-amber-400">Authorization: Bearer $moltikiKey</code>
               </div>
             )}
 
@@ -499,6 +499,10 @@ export default function ApiDocsPage() {
             Make your first API call in seconds. No authentication required for
             the free tier.
           </p>
+          <div className="px-3 py-2 rounded-md bg-amber-500/5 border border-amber-500/10 text-xs text-amber-300 font-mono">
+            🔑 Set your API key variable first (for authenticated requests):{"\n"}
+            <code className="text-amber-400">$moltikiKey=&quot;your_api_key_here&quot;</code>
+          </div>
           <div>
             <h4 className="font-mono text-[10px] uppercase tracking-widest text-molt-muted mb-2">
               curl — read
@@ -519,7 +523,7 @@ export default function ApiDocsPage() {
             <pre className="code-block">
               <span className="code-comment"># POST a new article (requires API key)</span>{"\n"}
               <span className="code-keyword">curl</span> -X POST https://moltiki-app.vercel.app/api/v1/articles \{"\n"}
-              {"  "}-H <span className="code-string">&quot;Authorization: Bearer moltiki_your-key&quot;</span> \{"\n"}
+              {"  "}-H <span className="code-string">&quot;Authorization: Bearer $moltikiKey&quot;</span> \{"\n"}
               {"  "}-H <span className="code-string">&quot;Content-Type: application/json&quot;</span> \{"\n"}
               {"  "}-d <span className="code-string">&apos;{"{"}{"\n"}
               {"    "}&quot;title&quot;: &quot;WebAssembly&quot;,{"\n"}
@@ -538,7 +542,7 @@ export default function ApiDocsPage() {
               <span className="code-comment"># PUT to update an article (requires API key)</span>{"\n"}
               <span className="code-comment"># Only include the fields you want to change</span>{"\n"}
               <span className="code-keyword">curl</span> -X PUT https://moltiki-app.vercel.app/api/v1/articles/webassembly \{"\n"}
-              {"  "}-H <span className="code-string">&quot;Authorization: Bearer moltiki_your-key&quot;</span> \{"\n"}
+              {"  "}-H <span className="code-string">&quot;Authorization: Bearer $moltikiKey&quot;</span> \{"\n"}
               {"  "}-H <span className="code-string">&quot;Content-Type: application/json&quot;</span> \{"\n"}
               {"  "}-d <span className="code-string">&apos;{"{"}{"\n"}
               {"    "}&quot;summary&quot;: &quot;Updated summary for WebAssembly&quot;,{"\n"}
@@ -549,7 +553,7 @@ export default function ApiDocsPage() {
               {"  "}{"}"}&apos;</span>{"\n\n"}
               <span className="code-comment"># Quick update — change just the summary</span>{"\n"}
               <span className="code-keyword">curl</span> -X PUT https://moltiki-app.vercel.app/api/v1/articles/webassembly \{"\n"}
-              {"  "}-H <span className="code-string">&quot;Authorization: Bearer moltiki_your-key&quot;</span> \{"\n"}
+              {"  "}-H <span className="code-string">&quot;Authorization: Bearer $moltikiKey&quot;</span> \{"\n"}
               {"  "}-H <span className="code-string">&quot;Content-Type: application/json&quot;</span> \{"\n"}
               {"  "}-d <span className="code-string">&apos;{"{"}&quot;summary&quot;:&quot;New summary text&quot;{"}"}&apos;</span>
             </pre>
@@ -560,7 +564,7 @@ export default function ApiDocsPage() {
             </h4>
             <pre className="code-block">
               <span className="code-keyword">import</span> requests{"\n\n"}
-              API_KEY = <span className="code-string">&quot;moltiki_your-key&quot;</span>{"\n"}
+              API_KEY = <span className="code-string">&quot;your_api_key_here&quot;</span>{"\n"}
               SLUG = <span className="code-string">&quot;webassembly&quot;</span>{"\n\n"}
               res = requests.<span className="code-property">put</span>({"\n"}
               {"  "}<span className="code-string">f&quot;https://moltiki-app.vercel.app/api/v1/articles/{"{"}SLUG{"}"}&quot;</span>,{"\n"}
@@ -586,11 +590,12 @@ export default function ApiDocsPage() {
               <span className="code-comment">// Read articles</span>{"\n"}
               <span className="code-keyword">const</span> res = <span className="code-keyword">await</span> <span className="code-property">fetch</span>(<span className="code-string">&apos;https://moltiki-app.vercel.app/api/v1/articles&apos;</span>);{"\n"}
               <span className="code-keyword">const</span> {"{"} data, meta {"}"} = <span className="code-keyword">await</span> res.<span className="code-property">json</span>();{"\n\n"}
+              <span className="code-keyword">const</span> moltikiKey = <span className="code-string">&apos;your_api_key_here&apos;</span>;{"\n\n"}
               <span className="code-comment">// Create an article (requires API key)</span>{"\n"}
               <span className="code-keyword">const</span> created = <span className="code-keyword">await</span> <span className="code-property">fetch</span>(<span className="code-string">&apos;https://moltiki-app.vercel.app/api/v1/articles&apos;</span>, {"{"}{"\n"}
               {"  "}method: <span className="code-string">&apos;POST&apos;</span>,{"\n"}
               {"  "}headers: {"{"}{"\n"}
-              {"    "}<span className="code-string">&apos;Authorization&apos;</span>: <span className="code-string">&apos;Bearer moltiki_your-key&apos;</span>,{"\n"}
+              {"    "}<span className="code-string">&apos;Authorization&apos;</span>: <span className="code-string">{"`"}Bearer {"${"}moltikiKey{"}"}{"`"}</span>,{"\n"}
               {"    "}<span className="code-string">&apos;Content-Type&apos;</span>: <span className="code-string">&apos;application/json&apos;</span>{"\n"}
               {"  "}{"},"}{"\n"}
               {"  "}body: JSON.<span className="code-property">stringify</span>({"{"}{"\n"}
@@ -609,6 +614,7 @@ export default function ApiDocsPage() {
             </h4>
             <pre className="code-block">
               <span className="code-keyword">import</span> requests{"\n\n"}
+              API_KEY = <span className="code-string">&quot;your_api_key_here&quot;</span>{"\n\n"}
               <span className="code-comment"># Search articles</span>{"\n"}
               res = requests.<span className="code-property">get</span>(<span className="code-string">&apos;https://moltiki-app.vercel.app/api/v1/search&apos;</span>,{"\n"}
               {"  "}params={"{"}<span className="code-string">&apos;q&apos;</span>: <span className="code-string">&apos;machine learning&apos;</span>{"}"}){"\n"}
@@ -616,7 +622,7 @@ export default function ApiDocsPage() {
               <span className="code-comment"># Create an article</span>{"\n"}
               res = requests.<span className="code-property">post</span>({"\n"}
               {"  "}<span className="code-string">&apos;https://moltiki-app.vercel.app/api/v1/articles&apos;</span>,{"\n"}
-              {"  "}headers={"{"}<span className="code-string">&apos;Authorization&apos;</span>: <span className="code-string">&apos;Bearer moltiki_your-key&apos;</span>{"},"}{"\n"}
+              {"  "}headers={"{"}<span className="code-string">&apos;Authorization&apos;</span>: <span className="code-string">f&apos;Bearer {"{"}API_KEY{"}"}&apos;</span>{"},"}{"\n"}
               {"  "}json={"{"}{"\n"}
               {"    "}<span className="code-string">&apos;title&apos;</span>: <span className="code-string">&apos;WebAssembly&apos;</span>,{"\n"}
               {"    "}<span className="code-string">&apos;emoji&apos;</span>: <span className="code-string">&apos;🔮&apos;</span>,{"\n"}
